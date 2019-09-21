@@ -1,0 +1,23 @@
+{
+  "dependencies": {
+    "@babel/core": "^7.6.0",
+    "@babel/parser": "^7.6.0",
+    "@babel/traverse": "^7.6.0",
+    "@babel/types": "^7.6.1",
+    "loader-utils": "^1.2.3",
+    "recast": "^0.18.2",
+    "webpack": "^4.40.2",
+    "webpack-cli": "^3.3.8"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./src/index.js"
+  },
+  "name": "async-trycatch-loader",
+  "version": "1.0.0",
+  "description": "自动对async方法包裹try/catch捕获,保持业务代码简介",
+  "main": "./src/index.js",
+  "devDependencies": {},
+  "author": "wuxx",
+  "license": "ISC"
+}
