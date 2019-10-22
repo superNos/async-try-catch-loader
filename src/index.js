@@ -22,7 +22,7 @@ const plugins = [
 
 const defaultOps = {
     catchCode: identifier => `console.error(${identifier})`,
-    identifier: "e",
+    identifier: 'e',
     finallyCode: null
 }
 
@@ -36,58 +36,62 @@ const isAsyncExpression = (node) => {
 }
 
 module.exports = function (code) {
-    if(!code.match(/await/)) {
+    try {
+        if(!code.match(/await/)) {
+            return code
+        }
+        let options = loaderUtils.getOptions(this)
+        options = { ...defaultOps, ...options }
+    
+        if (typeof options.catchCode === 'function') {
+            options.catchCode = options.catchCode(options.identifier)
+        }
+    
+        const catchNode = babylon.parse(options.catchCode).program.body
+        const finallyNode = options.finallyCode && babylon.parse(options.finallyCode).program.body
+    
+        const ast = babylon.parse(code, {
+            sourceType: 'module',
+            plugins
+        })
+        
+        traverse(ast, {
+            AwaitExpression(path) {
+                while(path && path.node) {
+                    const parent = path.parentPath
+                    if(t.isBlockStatement(path.node) && isAsyncExpression(parent.node)) {
+                        const tryCatchAst = t.tryStatement(
+                            path.node,
+                            t.catchClause(
+                                t.identifier(defaultOps.identifier),
+                                t.blockStatement(catchNode)
+                            ),
+                            options.finallyCode && t.blockStatement(finallyNode)
+                        )
+                        path.replaceWithMultiple([tryCatchAst])
+                        return
+                    } else if(t.isBlockStatement(path.node) && t.isTryStatement(parent.node)) {
+                        return
+                    }
+                    path = parent
+                }
+            }
+        })
+    
+        const result =  babel.transformFromAst(ast, null, {
+            parserOpts: {
+                parser: recast.parse,
+                plugins
+            },
+            generatorOpts: {
+                generator: recast.print,
+            },
+            sourceMaps: false,
+            babelrc: false
+        }).code
+        return result
+    } catch (error) {
+        console.log(error)
         return code
     }
-    let options = loaderUtils.getOptions(this)
-    options = { ...defaultOps, ...options }
-
-    if (typeof options.catchCode === "function") {
-        options.catchCode = options.catchCode(options.identifier);
-    }
-    let catchNode = babylon.parse(options.catchCode).program.body;
-    let finallyNode = options.finallyCode && babylon.parse(options.finallyCode).program.body;
-
-    const ast = babylon.parse(code, {
-        sourceType: 'module',
-        plugins
-    })
-    
-    traverse(ast, {
-        AwaitExpression(path) {
-            while(path && path.node) {
-                let parent = path.parentPath
-                if(t.isBlockStatement(path.node) && isAsyncExpression(parent.node)) {
-                    const tryCatchAst = t.tryStatement(
-                        path.node,
-                        t.catchClause(
-                            t.identifier(defaultOps.identifier),
-                            t.blockStatement(catchNode)
-                        ),
-                        options.finallyCode && t.blockStatement(finallyNode)
-                    )
-                    path.replaceWithMultiple([tryCatchAst])
-                    return;
-                } else if(t.isBlockStatement(path.node) && t.isTryStatement(parent.node)) {
-                    return;
-                }
-                path = parent
-            }
-        }
-    })
-
-    let result =  babel.transformFromAst(ast,null, {
-        parserOpts: {
-          parser: recast.parse,
-          plugins
-        },
-        generatorOpts: {
-          generator: recast.print,
-        },
-        sourceMaps: false,
-        babelrc: false
-      })
-
-    return result.code
 }
-

@@ -30,25 +30,4 @@ const code = `
     }
 `
 
-
-const code1 = `
-<div id="app-5">
-  <p>{{ message }}</p>
-  <button v-on:click="reverseMessage">反转消息</button>
-</div>
-var app5 = new Vue({
-  el: '#app-5',
-  data: {
-    message: 'Hello Vue.js!'
-  },
-  methods: {
-    reverseMessage: function () {
-      this.message = this.message.split('').reverse().join('')
-    }
-  }
-})
-
-
-`
-
-console.log(loader(code1))
+console.log(loader(code))
