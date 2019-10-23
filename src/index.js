@@ -11,7 +11,6 @@ const plugins = [
     'classProperties',
     'decorators',
     'doExpressions',
-    'estree',
     'exportExtensions',
     'functionSent',
     'functionBind',
@@ -37,9 +36,6 @@ const isAsyncExpression = (node) => {
 
 module.exports = function (code) {
     try {
-        if(!code.match(/await/)) {
-            return code
-        }
         let options = loaderUtils.getOptions(this)
         options = { ...defaultOps, ...options }
     
@@ -52,6 +48,9 @@ module.exports = function (code) {
     
         const ast = babylon.parse(code, {
             sourceType: 'module',
+            allowImportExportEverywhere: false,
+            allowReturnOutsideFunction: false,
+            tokens: false,
             plugins
         })
         
@@ -77,7 +76,7 @@ module.exports = function (code) {
                 }
             }
         })
-    
+
         const result =  babel.transformFromAst(ast, null, {
             parserOpts: {
                 parser: recast.parse,
@@ -95,3 +94,4 @@ module.exports = function (code) {
         return code
     }
 }
+
